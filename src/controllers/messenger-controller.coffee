@@ -39,6 +39,7 @@ class MessengerController
   _subscribe: ({req, res, toUuid, types}) =>
     req.body ?= {}
     req.body.types = types
+    {topics} = _.extend {}, req.query, req.body
 
     job = @jobToHttp.httpToJob jobType: 'GetAuthorizedSubscriptionTypes', request: req, toUuid: toUuid
 
@@ -64,11 +65,19 @@ class MessengerController
       {types} = data
 
       _.each types, (type) =>
-        messenger.subscribe type, toUuid
+        messenger.subscribe {type, topics, uuid: toUuid}
         return # subscribe sometimes returns false
 
       messenger.on 'message', (channel, message) =>
         debug 'on message', JSON.stringify(message)
+        readStream.push JSON.stringify(message) + '\n'
+
+      messenger.on 'config', (channel, message) =>
+        debug 'on config', JSON.stringify(message)
+        readStream.push JSON.stringify(message) + '\n'
+
+      messenger.on 'data', (channel, message) =>
+        debug 'on data', JSON.stringify(message)
         readStream.push JSON.stringify(message) + '\n'
 
       res.on 'close', ->
