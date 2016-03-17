@@ -5,7 +5,7 @@ services:
 - redis
 addons:
   code_climate:
-    repo_token: bfe59d48e8938b2bd3266dd13b1258a123b89d8388be18e48c780331100c2ffd
+    repo_token: 55b1bd329ffb3076d8bdca6517d0253de754e81536760f4dc2d8beab390330d3
 before_script:
 - npm install -g codeclimate-test-reporter
 after_script:
@@ -14,7 +14,7 @@ deploy:
   provider: npm
   email: serveradmin@octoblu.com
   api_key:
-    secure: Z5GAiLuGYitFgWSPiHuhqgrYRsbwUC4e6udAPBqrWzIKyVGuL/iBq6UG6LzNU5Eo30u+7qucVUsM8zJin4JmP/Wz537tnDxOr36Fy01r9D+ZgY/y/ewt6OfNISm0fX/Y//l1tH+yTS5GZ/aejqSbRxwg1UKtHT80U/5O7Y07YjA9qB+3KRx11JAXBGNvBI755zTy9imz9zbcIgJpifvvVtlu9r9yu+L7G3klEPYksMC2BlEEV99E/83dYlZMkqlQb8YMzeHPkvbEaQezDqjIbY5eyay5EhWChLS0+xJftF/x3I6pTIRvQQqNffJmjy8udug3SnfiRaV/traVOgLWIcsgyKxgaud5bCTL8vfHUOqlHdcmzO6pW/fIA5X09iGeULabrUjE3JTkiGEfSFkCfFUydMBkthy/7FGJ31+/D0jDqIsreVz5l+cFNX15loyNlsdUqHRvaDH77MmOR3HlDXyx4nWZ+u6DjAubV+8mxEixUv4X/9FeNy/oiYhrZ2WWfZZjZQZIdc/SHjMeNIEGJgJbEytj8Ndn/kJUI/k+DpoPlgHNGwip4jzX7jnycpbc1vouN3TtUeSekydrcblUlyDhtBtwKDrhCLAYhjJTub9X1ZWStrkexp1bn5R+wB9egdcs+vPCQdQUVSuyu7J1FTFcM/E592GgsJPYawSy5cc=
+    secure: NvnA+aqmUrWlZDQzBFjApflXr1emNf8qIl0HsRxtUmD7eap9vq26cRfQYj0PGINRSsFP5eBVo/+eZ83cXiCsA8G3vo+uefniTh2/RDVHzPgq3RU73b5FFVAUkWDpC4QGvFnSx0UikuZCAcb3Ce7vdeiZtLkvtklz5NxUTFFgmnQpvmWXtA1sLJA3P9uUgT8ZWnOR6MVBSp5Zt+ZPppWkKSTvQD2Tn2Dw6htJLWmz0BO5RJ9r2slsAMlZobjePh10Mds15lmEVYQwSTXyrF6S2/vV7pQO616dXQhzJwS2x4SUQGTbMT1Fqe4pGob/gjca7IsT9gkWQV7BIduiK9GLBP6vN/LDAWNJnc3E+kMsNLHy+NB7WtnOJprBMUaDLN2UK83CYJKLDaFORwWCtFwHDZpJ4UEd0IkasAIzfQouGv/UbQJdeQ1rEOBNljG/4DwaGNW3YxDK7jUfLtNA1lAeBeZUFoZZljN4EHaBotyIaJf+Ilm9nO0BFHxzMjYC/ddVsYmAq7CHLyloprHAPsFxP2Db/l05gvusAir965PiFR1JYiOQkWlg4FauDfHrZhnX9I2fzTTDKvzl6FvanCMrprrJlQFA2DaBCvLtCgUlGuBhduAfyJpXSUzpbjrzUHD8kxOkI52I6MrBrvAB08Okk4lVRWRcli+/+M4H6/wmw+c=
   on:
     tags: true
     branches: true
