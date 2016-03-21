@@ -12,6 +12,8 @@ class MessengerController
     auth = @authParser.parse req
     {types} = _.extend {}, req.query, req.body
     types ?= ['sent', 'received', 'broadcast']
+    types.push 'config'
+    types.push 'data'
     if _.isString types
       types = [types]
     @_subscribe {req, res, toUuid: auth.uuid, types}
@@ -20,6 +22,8 @@ class MessengerController
     auth = @authParser.parse req
     {types} = _.extend {}, req.query, req.body
     types ?= ['sent', 'received', 'broadcast']
+    types.push 'config'
+    types.push 'data'
     if _.isString types
       types = [types]
     @_subscribe {req, res, toUuid: req.params.uuid, types}
