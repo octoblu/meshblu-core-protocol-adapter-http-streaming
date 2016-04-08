@@ -3,7 +3,7 @@ request = require 'request'
 Server = require '../../src/server'
 async      = require 'async'
 moment     = require 'moment'
-redis      = require 'redis'
+redis      = require 'ioredis'
 RedisNS    = require '@octoblu/redis-ns'
 JobManager = require 'meshblu-core-job-manager'
 
