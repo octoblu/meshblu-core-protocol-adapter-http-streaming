@@ -11,9 +11,7 @@ redis                  = require 'ioredis'
 RedisNS                = require '@octoblu/redis-ns'
 debug                  = require('debug')('meshblu-server-http:server')
 Router                 = require './router'
-{Pool}                 = require 'generic-pool'
-PooledJobManager       = require 'meshblu-core-pooled-job-manager'
-JobLogger              = require 'job-logger'
+RedisPooledJobManager  = require 'meshblu-core-redis-pooled-job-manager'
 JobToHttp              = require './helpers/job-to-http'
 PackageJSON            = require '../package.json'
 MessengerClientFactory = require './messenger-client-factory'
@@ -23,8 +21,8 @@ class Server
   constructor: (options)->
     {@disableLogging, @port, @aliasServerUri} = options
     {@redisUri, @namespace, @jobTimeoutSeconds, @meshbluPort, @meshbluHost} = options
-    {@connectionPoolMaxConnections} = options
-    {@jobLogRedisUri, @jobLogQueue} = options
+    {@maxConnections} = options
+    {@jobLogRedisUri, @jobLogQueue, @jobLogSampleRate} = options
     @panic 'missing @jobLogQueue', 2 unless @jobLogQueue?
     @panic 'missing @jobLogRedisUri', 2 unless @jobLogRedisUri?
     @panic 'missing @meshbluHost', 2 unless @meshbluHost?
@@ -49,18 +47,17 @@ class Server
     app.use bodyParser.urlencoded limit: '50mb', extended : true
     app.use bodyParser.json limit : '50mb'
 
-    jobLogger = new JobLogger
-      jobLogQueue: @jobLogQueue
-      indexPrefix: 'metric:meshblu-server-http'
-      type: 'meshblu-server-http:request'
-      client: redis.createClient(@jobLogRedisUri)
-
-    jobManagerConnectionPool = @_createConnectionPool(maxConnections: @connectionPoolMaxConnections)
-
-    jobManager = new PooledJobManager
-      timeoutSeconds: @jobTimeoutSeconds
-      pool: jobManagerConnectionPool
-      jobLogger: jobLogger
+    jobManager = new RedisPooledJobManager {
+      jobLogIndexPrefix: 'metric:meshblu-core-protocol-adapter-http-streaming'
+      jobLogType: 'meshblu-core-protocol-adapter-http-streaming:request'
+      @jobTimeoutSeconds
+      @jobLogQueue
+      @jobLogRedisUri
+      @jobLogSampleRate
+      @maxConnections
+      @redisUri
+      @namespace
+    }
 
     messengerClientFactory = new MessengerClientFactory {@namespace, @redisUri}
 
@@ -79,29 +76,5 @@ class Server
 
   stop: (callback) =>
     @server.close callback
-
-  _createConnectionPool: ({maxConnections}) =>
-    connectionPool = new Pool
-      max: maxConnections
-      min: 0
-      returnToHead: true # sets connection pool to stack instead of queue behavior
-      create: (callback) =>
-        client = _.bindAll new RedisNS @namespace, redis.createClient(@redisUri)
-
-        client.on 'end', ->
-          client.hasError = new Error 'ended'
-
-        client.on 'error', (error) ->
-          client.hasError = error
-          callback error if callback?
-
-        client.once 'ready', ->
-          callback null, client
-          callback = null
-
-      destroy: (client) => client.end true
-      validate: (client) => !client.hasError?
-
-    return connectionPool
 
 module.exports = Server

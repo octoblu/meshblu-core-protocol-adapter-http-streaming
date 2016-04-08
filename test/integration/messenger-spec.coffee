@@ -19,6 +19,9 @@ describe 'GET /subscribe', ->
       jobLogRedisUri: 'redis://localhost:6379'
       meshbluHost: 'localhost'
       meshbluPort: 3000
+      maxConnections: 10
+      jobLogSampleRate: 1.00
+      redisUri: 'redis://localhost'
 
     @sut.run done
 
@@ -84,38 +87,3 @@ describe 'GET /subscribe', ->
 
     it 'should receive a message', ->
       expect(@message.toString().trim()).to.deep.equal String(@nonce)
-
-    it 'should log the message', (done) ->
-      @jobLogClient.llen 'meshblu:job-log', (error, count) =>
-        return done error if error?
-        expect(count).to.equal 1
-        done()
-
-    it 'should log the attempt and success of the message', (done) ->
-      @jobLogClient.lindex 'meshblu:job-log', 0, (error, jobStr) =>
-        return done error if error?
-        todaySuffix = moment.utc().format('YYYY-MM-DD')
-        index = "metric:meshblu-server-http-#{todaySuffix}"
-        expect(JSON.parse jobStr).to.containSubset {
-          "index": index
-          "type": "meshblu-server-http:request"
-          "body": {
-            "request": {
-              "metadata": {
-                "auth": {
-                  "uuid": "irritable-captian"
-                }
-                "fromUuid": "irritable-captian"
-                "jobType": "GetAuthorizedSubscriptionTypes"
-                "toUuid": "irritable-captian"
-              }
-            }
-            "response": {
-              "metadata": {
-                "code": 204
-                "success": true
-              }
-            }
-          }
-        }
-        done()
