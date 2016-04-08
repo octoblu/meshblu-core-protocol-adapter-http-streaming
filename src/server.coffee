@@ -20,13 +20,11 @@ UuidAliasResolver      = require 'meshblu-uuid-alias-resolver'
 class Server
   constructor: (options)->
     {@disableLogging, @port, @aliasServerUri} = options
-    {@redisUri, @namespace, @jobTimeoutSeconds, @meshbluPort, @meshbluHost} = options
+    {@redisUri, @namespace, @jobTimeoutSeconds} = options
     {@maxConnections} = options
     {@jobLogRedisUri, @jobLogQueue, @jobLogSampleRate} = options
     @panic 'missing @jobLogQueue', 2 unless @jobLogQueue?
     @panic 'missing @jobLogRedisUri', 2 unless @jobLogRedisUri?
-    @panic 'missing @meshbluHost', 2 unless @meshbluHost?
-    @panic 'missing @meshbluPort', 2 unless @meshbluPort?
 
   address: =>
     @server.address()
@@ -68,7 +66,7 @@ class Server
       cache: uuidAliasResolver
       aliasServerUri: @aliasServerUri
 
-    router = new Router {jobManager, jobToHttp, @meshbluHost, @meshbluPort, messengerClientFactory, uuidAliasResolver}
+    router = new Router {jobManager, jobToHttp, messengerClientFactory, uuidAliasResolver}
 
     router.route app
 

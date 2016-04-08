@@ -17,8 +17,6 @@ describe 'GET /subscribe', ->
       namespace: 'meshblu:server:http:test'
       jobLogQueue: 'meshblu:job-log'
       jobLogRedisUri: 'redis://localhost:6379'
-      meshbluHost: 'localhost'
-      meshbluPort: 3000
       maxConnections: 10
       jobLogSampleRate: 1.00
       redisUri: 'redis://localhost'

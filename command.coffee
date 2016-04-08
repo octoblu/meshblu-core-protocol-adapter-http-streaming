@@ -9,13 +9,11 @@ class Command
       redisUri:                     process.env.REDIS_URI
       namespace:                    process.env.NAMESPACE || 'meshblu'
       jobTimeoutSeconds:            parseInt process.env.JOB_TIMEOUT_SECONDS || 30
-      connectionPoolMaxConnections: parseInt process.env.CONNECTION_POOL_MAX_CONNECTIONS || 100
+      maxConnections:               parseInt process.env.CONNECTION_POOL_MAX_CONNECTIONS || 100
       disableLogging:               process.env.DISABLE_LOGGING == "true"
       jobLogRedisUri:               process.env.JOB_LOG_REDIS_URI
       jobLogQueue:                  process.env.JOB_LOG_QUEUE
       jobLogSampleRate:             parseFloat process.env.JOB_LOG_SAMPLE_RATE
-      meshbluHost:                  process.env.MESHBLU_HOST
-      meshbluPort:                  process.env.MESHBLU_PORT
 
   panic: (error) =>
     console.error error.stack
@@ -27,8 +25,6 @@ class Command
     @panic new Error('Missing required environment variable: JOB_LOG_REDIS_URI') if _.isEmpty @serverOptions.jobLogRedisUri
     @panic new Error('Missing required environment variable: JOB_LOG_SAMPLE_RATE') unless @serverOptions.jobLogSampleRate?
     @panic new Error('Missing required environment variable: JOB_LOG_QUEUE') if _.isEmpty @serverOptions.jobLogQueue
-    @panic new Error('Missing required environment variable: MESHBLU_HOST') if _.isEmpty @serverOptions.meshbluHost
-    @panic new Error('Missing required environment variable: MESHBLU_PORT') if _.isEmpty @serverOptions.meshbluPort
 
     server = new Server @serverOptions
     server.run (error) =>
