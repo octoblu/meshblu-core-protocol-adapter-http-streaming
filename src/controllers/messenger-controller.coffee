@@ -65,12 +65,14 @@ class MessengerController
       readStream.pipe res
 
       messenger = new MessengerManager {client, @uuidAliasResolver}
-      data = JSON.parse jobResponse.rawData
-      {types} = data
+      messenger.connect (error) =>
+        return res.sendError error if error?
+        data = JSON.parse jobResponse.rawData
+        {types} = data
 
-      _.each types, (type) =>
-        messenger.subscribe {type, topics, uuid: toUuid}
-        return # subscribe sometimes returns false
+        _.each types, (type) =>
+          messenger.subscribe {type, topics, uuid: toUuid}
+          return # subscribe sometimes returns false
 
       messenger.on 'message', (channel, message) =>
         debug 'on message', JSON.stringify(message)
