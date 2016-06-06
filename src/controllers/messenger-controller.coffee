@@ -84,6 +84,9 @@ class MessengerController
         debug 'on data', JSON.stringify(message)
         readStream.push JSON.stringify(message) + '\n'
 
+      messenger.on 'error', (error) =>
+        messenger.close()
+
       res.on 'close', ->
         messenger.close()
 
