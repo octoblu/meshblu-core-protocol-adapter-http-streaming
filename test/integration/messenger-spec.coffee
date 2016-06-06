@@ -28,7 +28,7 @@ describe 'GET /subscribe', ->
 
   beforeEach ->
     @nonce = Date.now()
-    @redis = _.bindAll new RedisNS 'meshblu:server:http:test', redis.createClient(dropBufferSupport: true)
+    @redis = new RedisNS 'meshblu:server:http:test', redis.createClient(dropBufferSupport: true)
     @jobManager = new JobManager client: @redis, timeoutSeconds: 1
 
   beforeEach (done) ->
