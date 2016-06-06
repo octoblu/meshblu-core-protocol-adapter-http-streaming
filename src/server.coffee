@@ -19,10 +19,19 @@ UuidAliasResolver      = require 'meshblu-uuid-alias-resolver'
 
 class Server
   constructor: (options)->
-    {@disableLogging, @port, @aliasServerUri} = options
-    {@redisUri, @namespace, @jobTimeoutSeconds} = options
-    {@maxConnections} = options
-    {@jobLogRedisUri, @jobLogQueue, @jobLogSampleRate} = options
+    {
+      @disableLogging
+      @port
+      @aliasServerUri
+      @redisUri
+      @firehoseRedisUri
+      @namespace
+      @jobTimeoutSeconds
+      @maxConnections
+      @jobLogRedisUri
+      @jobLogQueue
+      @jobLogSampleRate
+    } = options
     @panic 'missing @jobLogQueue', 2 unless @jobLogQueue?
     @panic 'missing @jobLogRedisUri', 2 unless @jobLogRedisUri?
 
@@ -57,7 +66,7 @@ class Server
       @namespace
     }
 
-    messengerClientFactory = new MessengerClientFactory {@namespace, @redisUri}
+    messengerClientFactory = new MessengerClientFactory {@namespace, @firehoseRedisUri}
 
     jobToHttp = new JobToHttp
 
