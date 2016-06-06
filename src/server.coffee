@@ -1,21 +1,21 @@
-_                      = require 'lodash'
-colors                 = require 'colors'
-morgan                 = require 'morgan'
-express                = require 'express'
-bodyParser             = require 'body-parser'
-cors                   = require 'cors'
-errorHandler           = require 'errorhandler'
-meshbluHealthcheck     = require 'express-meshblu-healthcheck'
-SendError              = require 'express-send-error'
-redis                  = require 'ioredis'
-RedisNS                = require '@octoblu/redis-ns'
-debug                  = require('debug')('meshblu-server-http:server')
-Router                 = require './router'
-RedisPooledJobManager  = require 'meshblu-core-redis-pooled-job-manager'
-JobToHttp              = require './helpers/job-to-http'
-PackageJSON            = require '../package.json'
-MessengerClientFactory = require './messenger-client-factory'
-UuidAliasResolver      = require 'meshblu-uuid-alias-resolver'
+_                       = require 'lodash'
+colors                  = require 'colors'
+morgan                  = require 'morgan'
+express                 = require 'express'
+bodyParser              = require 'body-parser'
+cors                    = require 'cors'
+errorHandler            = require 'errorhandler'
+meshbluHealthcheck      = require 'express-meshblu-healthcheck'
+SendError               = require 'express-send-error'
+redis                   = require 'ioredis'
+RedisNS                 = require '@octoblu/redis-ns'
+debug                   = require('debug')('meshblu-server-http:server')
+Router                  = require './router'
+RedisPooledJobManager   = require 'meshblu-core-redis-pooled-job-manager'
+JobToHttp               = require './helpers/job-to-http'
+PackageJSON             = require '../package.json'
+MessengerManagerFactory = require 'meshblu-core-manager-messenger/factory'
+UuidAliasResolver       = require 'meshblu-uuid-alias-resolver'
 
 class Server
   constructor: (options)->
@@ -66,16 +66,16 @@ class Server
       @namespace
     }
 
-    messengerClientFactory = new MessengerClientFactory {@namespace, @firehoseRedisUri}
-
     jobToHttp = new JobToHttp
 
-    uuidAliasClient = _.bindAll new RedisNS 'uuid-alias', redis.createClient(@redisUri)
+    uuidAliasClient = _.bindAll new RedisNS 'uuid-alias', redis.createClient(@redisUri, dropBufferSupport: true)
     uuidAliasResolver = new UuidAliasResolver
       cache: uuidAliasResolver
       aliasServerUri: @aliasServerUri
 
-    router = new Router {jobManager, jobToHttp, messengerClientFactory, uuidAliasResolver}
+    messengerManagerFactory = new MessengerManagerFactory {uuidAliasResolver, @namespace, redisUri: @firehoseRedisUri}
+
+    router = new Router {jobManager, jobToHttp, messengerManagerFactory}
 
     router.route app
 

@@ -2,10 +2,9 @@ _                 = require 'lodash'
 debug             = require('debug')('meshblu-server-http:messenger-controller')
 {Readable}        = require 'stream'
 MeshbluAuthParser = require '../helpers/meshblu-auth-parser'
-MessengerManager  = require 'meshblu-core-manager-messenger'
 
 class MessengerController
-  constructor: ({@jobManager, @jobToHttp, @messengerClientFactory, @uuidAliasResolver}) ->
+  constructor: ({@jobManager, @jobToHttp, @messengerManagerFactory}) ->
     @authParser = new MeshbluAuthParser
 
   subscribeSelf: (req, res) =>
@@ -59,12 +58,11 @@ class MessengerController
       }
 
       res.set @jobToHttp.metadataToHeaders jobResponse.metadata
-      client = @messengerClientFactory.build()
+      messenger = @messengerManagerFactory.build()
       readStream = new Readable
       readStream._read = _.noop
       readStream.pipe res
 
-      messenger = new MessengerManager {client, @uuidAliasResolver}
       messenger.connect (error) =>
         return res.sendError error if error?
         data = JSON.parse jobResponse.rawData

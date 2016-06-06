@@ -28,11 +28,11 @@ describe 'GET /subscribe', ->
 
   beforeEach ->
     @nonce = Date.now()
-    @redis = _.bindAll new RedisNS 'meshblu:server:http:test', redis.createClient()
+    @redis = _.bindAll new RedisNS 'meshblu:server:http:test', redis.createClient(dropBufferSupport: true)
     @jobManager = new JobManager client: @redis, timeoutSeconds: 1
 
   beforeEach (done) ->
-    @jobLogClient = redis.createClient()
+    @jobLogClient = redis.createClient dropBufferSupport: true
     @jobLogClient.del 'meshblu:job-log', done
 
   context 'when the request is successful', ->

@@ -1,8 +1,8 @@
 MessengerController        = require './controllers/messenger-controller'
 
 class Router
-  constructor: ({jobManager, jobToHttp, messengerClientFactory, uuidAliasResolver})->
-    @messengerController = new MessengerController {jobManager, jobToHttp, messengerClientFactory, uuidAliasResolver}
+  constructor: ({jobManager, jobToHttp, messengerManagerFactory})->
+    @messengerController = new MessengerController {jobManager, jobToHttp, messengerManagerFactory}
 
   route: (app) =>
     app.get '/subscribe', @messengerController.subscribeSelf
