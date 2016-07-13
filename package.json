@@ -1,6 +1,6 @@
 {
   "name": "meshblu-core-protocol-adapter-http-streaming",
-  "version": "1.4.0",
+  "version": "potentially",
   "description": "",
   "engines": {
     "node": ">=5.0.0"

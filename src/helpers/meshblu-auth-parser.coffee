@@ -1,20 +1,24 @@
+_ = require 'lodash'
+
 class MeshbluAuthParser
   parse: (request) =>
-    authPair  = @parseBasicAuth request
+    authPair  = @parseAuthorizationHeader request
     authPair ?= @parseMeshbluAuthHeaders request
     authPair ?= @parseSkynetAuthHeaders request
     authPair ?= @parseExtraHeaders request
     authPair ?= {uuid: undefined, token: undefined}
+    authPair.as = request.header('x-meshblu-as')
     return authPair
 
-  parseBasicAuth: (request) =>
+  parseAuthorizationHeader: (request) =>
     return unless request.header 'authorization'
     [scheme,encodedToken] = request.header('authorization').split(' ')
     [uuid,token] = new Buffer(encodedToken, 'base64').toString().split(':')
+    return unless uuid? && token?
 
     return {
-      uuid:  uuid.trim?()
-      token: token.trim?()
+      uuid:  _.trim uuid
+      token: _.trim token
     }
 
   parseMeshbluAuthHeaders: (request) =>
@@ -28,8 +32,9 @@ class MeshbluAuthParser
 
   parseHeader: (request, uuidHeader, tokenHeader) =>
     return unless request.header(uuidHeader) and request.header(tokenHeader)
-    uuid  = request.header(uuidHeader).trim()
-    token = request.header(tokenHeader).trim()
+    uuid  = _.trim request.header(uuidHeader)
+    token = _.trim request.header(tokenHeader)
+    return unless uuid? && token?
     return {uuid, token}
 
 module.exports = MeshbluAuthParser
