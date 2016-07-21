@@ -16,7 +16,7 @@ JobToHttp               = require './helpers/job-to-http'
 PackageJSON             = require '../package.json'
 MessengerManagerFactory = require 'meshblu-core-manager-messenger/factory'
 UuidAliasResolver       = require 'meshblu-uuid-alias-resolver'
-
+compression             = require 'compression'
 class Server
   constructor: (options)->
     {
@@ -48,6 +48,7 @@ class Server
     app = express()
     app.use SendError()
     app.use meshbluHealthcheck()
+    app.use compression()
     app.use morgan 'dev', immediate: false unless @disableLogging
     app.use errorHandler()
     app.use cors()
