@@ -9,7 +9,7 @@
   "main": "command.js",
   "scripts": {
     "start": "node command.js",
-    "test": "istanbul cover _mocha -- --require coffee-coverage/register-istanbul --reporter spec"
+    "test": "istanbul cover _mocha -- -R spec --require coffee-coverage/register-istanbul && mocha --reporter json > coverage/mocha.json"
   },
   "keywords": [],
   "repository": {
