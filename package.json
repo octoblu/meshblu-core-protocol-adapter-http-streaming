@@ -9,7 +9,10 @@
   "main": "command.js",
   "scripts": {
     "start": "node command.js",
-    "test": "istanbul cover _mocha -- -R spec --require coffee-coverage/register-istanbul && mocha --reporter json > coverage/mocha.json"
+    "test": "mocha",
+    "coverage": "nyc npm test",
+    "mocha:json": "env NPM_ENV=test mocha --reporter json > coverage/mocha.json",
+    "test:watch": "mocha -w -R mocha-multi --reporter-options spec=-,mocha-osx-reporter=-"
   },
   "keywords": [],
   "repository": {
@@ -44,18 +47,29 @@
   "devDependencies": {
     "chai": "^3.4.0",
     "chai-subset": "^1.2.0",
-    "coffee-coverage": "^0.6.3",
     "fakeredis": "^0.3.4",
-    "istanbul": "^0.4.0",
     "meshblu-core-job-manager": "^3.5.1",
     "mocha": "^2.3.3",
-    "mocha-istanbul": "^0.2.0",
+    "mocha-multi": "^0.9.1",
+    "mocha-osx-reporter": "^0.1.2",
     "node-mocks-http": "^1.4.4",
+    "nyc": "^8.3.0",
     "semver": "^5.0.3",
     "sinon": "^1.17.2",
     "sinon-chai": "^2.8.0"
   },
   "optionalDependencies": {
     "hiredis": "^0.4.1"
+  },
+  "nyc": {
+    "cache": true,
+    "reporter": [
+      "text-summary",
+      "lcov",
+      "json"
+    ],
+    "extension": [
+      ".coffee"
+    ]
   }
 }
