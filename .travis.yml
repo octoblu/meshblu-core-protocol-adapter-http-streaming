@@ -1,20 +1,20 @@
 language: node_js
 node_js:
-- '5'
+  - '5'
 services:
-- redis
+  - redis
 addons:
   code_climate:
     repo_token: 55b1bd329ffb3076d8bdca6517d0253de754e81536760f4dc2d8beab390330d3
 before_script:
-- npm install -g codeclimate-test-reporter
+  - npm install -g codeclimate-test-reporter
 after_script:
-- codeclimate-test-reporter < coverage/lcov.info
+  - codeclimate-test-reporter < coverage/lcov.info
 branches:
   only:
-  - "/^v[0-9]/"
+    - '/^v[0-9]/'
 after_success:
-- npm run coverage
-- npm run mocha:json
-- bash <(curl -s https://codecov.io/bash)
-- bash <(curl -s https://codecov.octoblu.com/bash)
+  - npm run coverage
+  - 'npm run mocha:json'
+  - 'bash <(curl -s https://codecov.io/bash)'
+  - 'bash <(curl -s https://codecov.octoblu.com/bash)'
