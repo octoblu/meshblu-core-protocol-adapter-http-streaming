@@ -1,61 +1,80 @@
-_ = require 'lodash'
+_       = require 'lodash'
 request = require 'request'
-Server = require '../../src/server'
-async      = require 'async'
-moment     = require 'moment'
-redis      = require 'ioredis'
-RedisNS    = require '@octoblu/redis-ns'
-JobManager = require 'meshblu-core-job-manager'
+Server  = require '../../src/server'
+async   = require 'async'
+moment  = require 'moment'
+Redis   = require 'ioredis'
+RedisNS = require '@octoblu/redis-ns'
+UUID    = require 'uuid'
+{ JobManagerResponder } = require 'meshblu-core-job-manager'
 
 describe 'GET /subscribe', ->
   beforeEach (done) ->
+    @nonce = Date.now()
     @port = 0xd00d
-    @sut = new Server
+    @namespace = 'meshblu:server:http-streaming:test'
+    queueId = UUID.v4()
+    @requestQueueName = "test:request:queue:#{queueId}"
+    @responseQueueName = "test:response:queue:#{queueId}"
+    @sut = new Server {
       port: @port
       disableLogging: true
-      jobTimeoutSeconds: 1
-      namespace: 'meshblu:server:http:test'
+      jobTimeoutSeconds: 10
+      queueTimeoutSeconds: 10
+      jobLogSampleRate: 0
+      redisUri: 'redis://localhost'
+      cacheRedisUri: 'redis://localhost'
+      firehoseRedisUri: 'redis://localhost'
       jobLogQueue: 'meshblu:job-log'
       jobLogRedisUri: 'redis://localhost:6379'
-      maxConnections: 10
-      jobLogSampleRate: 1.00
-      redisUri: 'redis://localhost'
+      @namespace
+      @requestQueueName
+      @responseQueueName
+    }
 
     @sut.run done
 
   afterEach (done) ->
     @sut.stop => done()
 
-  beforeEach ->
-    @nonce = Date.now()
-    @redis = new RedisNS 'meshblu:server:http:test', redis.createClient(dropBufferSupport: true)
-    @jobManager = new JobManager client: @redis, timeoutSeconds: 1
+  beforeEach (done) ->
+    client = new RedisNS @namespace, new Redis 'localhost', dropBufferSupport: true
+    client.on 'ready', =>
+      queueClient = new RedisNS @namespace, new Redis 'localhost', dropBufferSupport: true
+      queueClient.on 'ready', =>
+        @jobManager = new JobManagerResponder {
+          client
+          queueClient
+          jobTimeoutSeconds: 10
+          queueTimeoutSeconds: 10
+          jobLogSampleRate: 0
+          @requestQueueName
+          @responseQueueName
+        }
+        done()
 
   beforeEach (done) ->
-    @jobLogClient = redis.createClient dropBufferSupport: true
+    @jobLogClient = new Redis 'localhost', dropBufferSupport: true
     @jobLogClient.del 'meshblu:job-log', done
+    return # avoid returning redis
 
   context 'when the request is successful', ->
-    beforeEach ->
-      async.forever (next) =>
-        @jobManager.getRequest ['request'], (error, @jobRequest) =>
-          next @jobRequest
-          return unless @jobRequest?
-
-          response =
-            metadata:
-              code: 204
-              responseId: @jobRequest.metadata.responseId
-            data:
-              types: ['received']
-
-          @jobManager.createResponse 'response', response, (error) =>
-            throw error if error?
-            setTimeout =>
-              @redis.publish 'received:irritable-captian', @nonce
-            , 1000
-
     beforeEach (done) ->
+      @jobManager.do (@jobRequest, callback) =>
+        response =
+          metadata:
+            code: 204
+            responseId: @jobRequest.metadata.responseId
+          data:
+            types: ['received']
+
+        callback null, response
+        setTimeout =>
+          client = new RedisNS 'meshblu:server:http-streaming:test', new Redis 'localhost', dropBufferSupport: true
+          client.on 'ready', =>
+            client.publish 'received:irritable-captian', @nonce
+        , 1000
+
       options =
         auth:
           username: 'irritable-captian'

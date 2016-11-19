@@ -7,16 +7,18 @@ cors                    = require 'cors'
 errorHandler            = require 'errorhandler'
 meshbluHealthcheck      = require 'express-meshblu-healthcheck'
 SendError               = require 'express-send-error'
-redis                   = require 'ioredis'
+Redis                   = require 'ioredis'
 RedisNS                 = require '@octoblu/redis-ns'
 debug                   = require('debug')('meshblu-server-http:server')
 Router                  = require './router'
-RedisPooledJobManager   = require 'meshblu-core-redis-pooled-job-manager'
 JobToHttp               = require './helpers/job-to-http'
 PackageJSON             = require '../package.json'
 MessengerManagerFactory = require 'meshblu-core-manager-messenger/factory'
 UuidAliasResolver       = require 'meshblu-uuid-alias-resolver'
 compression             = require 'compression'
+JobLogger               = require 'job-logger'
+{ JobManagerRequester } = require 'meshblu-core-job-manager'
+
 class Server
   constructor: (options)->
     {
@@ -24,6 +26,7 @@ class Server
       @port
       @aliasServerUri
       @redisUri
+      @cacheRedisUri
       @firehoseRedisUri
       @namespace
       @jobTimeoutSeconds
@@ -31,9 +34,16 @@ class Server
       @jobLogRedisUri
       @jobLogQueue
       @jobLogSampleRate
+      @requestQueueName
+      @responseQueueName
     } = options
     @panic 'missing @jobLogQueue', 2 unless @jobLogQueue?
     @panic 'missing @jobLogRedisUri', 2 unless @jobLogRedisUri?
+    @panic 'missing @redisUri', 2 unless @redisUri?
+    @panic 'missing @cacheRedisUri', 2 unless @cacheRedisUri?
+    @panic 'missing @firehoseRedisUri', 2 unless @firehoseRedisUri?
+    @panic 'missing @requestQueueName', 2 unless @requestQueueName?
+    @panic 'missing @responseQueueName', 2 unless @responseQueueName?
 
   address: =>
     @server.address()
@@ -55,34 +65,52 @@ class Server
     app.use bodyParser.urlencoded limit: '50mb', extended : true
     app.use bodyParser.json limit : '50mb'
 
-    jobManager = new RedisPooledJobManager {
-      jobLogIndexPrefix: 'metric:meshblu-core-protocol-adapter-http-streaming'
-      jobLogType: 'meshblu-core-protocol-adapter-http-streaming:request'
+    client = new RedisNS @namespace, new Redis @redisUri, dropBufferSupport: true
+    queueClient = new RedisNS @namespace, new Redis @redisUri, dropBufferSupport: true
+
+    jobLogger = new JobLogger
+      client: new Redis @jobLogRedisUri, dropBufferSupport: true
+      indexPrefix: 'metric:meshblu-core-protocol-adapter-http-streaming'
+      type: 'meshblu-core-protocol-adapter-http-streaming:request'
+      jobLogQueue: @jobLogQueue
+
+    @jobManager = new JobManagerRequester {
+      client
+      queueClient
       @jobTimeoutSeconds
-      @jobLogQueue
-      @jobLogRedisUri
       @jobLogSampleRate
-      @maxConnections
-      @redisUri
-      @namespace
+      @requestQueueName
+      @responseQueueName
+      queueTimeoutSeconds: @jobTimeoutSeconds
     }
+
+    @jobManager._do = @jobManager.do
+    @jobManager.do = (request, callback) =>
+      @jobManager._do request, (error, response) =>
+        jobLogger.log { error, request, response }, (jobLoggerError) =>
+          return callback jobLoggerError if jobLoggerError?
+          callback error, response
+
+    queueClient.on 'ready', =>
+      @jobManager.startProcessing()
 
     jobToHttp = new JobToHttp
 
-    uuidAliasClient = _.bindAll new RedisNS 'uuid-alias', redis.createClient(@redisUri, dropBufferSupport: true)
+    uuidAliasClient = new RedisNS 'uuid-alias', new Redis @cacheRedisUri, dropBufferSupport: true
     uuidAliasResolver = new UuidAliasResolver
       cache: uuidAliasResolver
       aliasServerUri: @aliasServerUri
 
     messengerManagerFactory = new MessengerManagerFactory {uuidAliasResolver, @namespace, redisUri: @firehoseRedisUri}
 
-    router = new Router {jobManager, jobToHttp, messengerManagerFactory}
+    router = new Router {@jobManager, jobToHttp, messengerManagerFactory}
 
     router.route app
 
     @server = app.listen @port, callback
 
   stop: (callback) =>
+    @jobManager?.stopProcessing()
     @server.close callback
 
 module.exports = Server
