@@ -65,9 +65,6 @@ class Server
     app.use bodyParser.urlencoded limit: '50mb', extended : true
     app.use bodyParser.json limit : '50mb'
 
-    client = new RedisNS @namespace, new Redis @redisUri, dropBufferSupport: true
-    queueClient = new RedisNS @namespace, new Redis @redisUri, dropBufferSupport: true
-
     jobLogger = new JobLogger
       client: new Redis @jobLogRedisUri, dropBufferSupport: true
       indexPrefix: 'metric:meshblu-core-protocol-adapter-http-streaming'
