@@ -1,6 +1,6 @@
 {
   "name": "meshblu-core-protocol-adapter-http-streaming",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "",
   "engines": {
     "node": ">=5.0.0"
@@ -37,7 +37,7 @@
     "ioredis": "^2.4.0",
     "job-logger": "^4.3.1",
     "lodash": "^4.17.2",
-    "meshblu-core-job-manager": "^8.0.3",
+    "meshblu-core-job-manager": "^9.0.0",
     "meshblu-core-manager-messenger": "^2.3.3",
     "meshblu-uuid-alias-resolver": "^1.0.1",
     "morgan": "^1.6.1",

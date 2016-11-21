@@ -75,14 +75,18 @@ class Server
       jobLogQueue: @jobLogQueue
 
     @jobManager = new JobManagerRequester {
-      client
-      queueClient
+      @namespace
+      @redisUri
+      maxConnections: 2
       @jobTimeoutSeconds
       @jobLogSampleRate
       @requestQueueName
       @responseQueueName
       queueTimeoutSeconds: @jobTimeoutSeconds
     }
+
+    @jobManager.once 'error', (error) =>
+      @panic 'fatal job manager error', 1, error
 
     @jobManager._do = @jobManager.do
     @jobManager.do = (request, callback) =>
@@ -91,26 +95,25 @@ class Server
           return callback jobLoggerError if jobLoggerError?
           callback error, response
 
-    queueClient.on 'ready', =>
-      @jobManager.startProcessing()
+    @jobManager.start (error) =>
+      return callback error if error?
+      jobToHttp = new JobToHttp
 
-    jobToHttp = new JobToHttp
+      uuidAliasClient = new RedisNS 'uuid-alias', new Redis @cacheRedisUri, dropBufferSupport: true
+      uuidAliasResolver = new UuidAliasResolver
+        cache: uuidAliasResolver
+        aliasServerUri: @aliasServerUri
 
-    uuidAliasClient = new RedisNS 'uuid-alias', new Redis @cacheRedisUri, dropBufferSupport: true
-    uuidAliasResolver = new UuidAliasResolver
-      cache: uuidAliasResolver
-      aliasServerUri: @aliasServerUri
+      messengerManagerFactory = new MessengerManagerFactory {uuidAliasResolver, @namespace, redisUri: @firehoseRedisUri}
 
-    messengerManagerFactory = new MessengerManagerFactory {uuidAliasResolver, @namespace, redisUri: @firehoseRedisUri}
+      router = new Router {@jobManager, jobToHttp, messengerManagerFactory}
 
-    router = new Router {@jobManager, jobToHttp, messengerManagerFactory}
+      router.route app
 
-    router.route app
-
-    @server = app.listen @port, callback
+      @server = app.listen @port, callback
 
   stop: (callback) =>
-    @jobManager?.stopProcessing()
-    @server.close callback
+    @jobManager.stop =>
+      @server.close callback
 
 module.exports = Server

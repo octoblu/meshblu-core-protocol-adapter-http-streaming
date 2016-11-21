@@ -14,6 +14,7 @@ describe 'GET /subscribe', ->
     @port = 0xd00d
     @namespace = 'meshblu:server:http-streaming:test'
     queueId = UUID.v4()
+    @redisUri = 'redis://localhost'
     @requestQueueName = "test:request:queue:#{queueId}"
     @responseQueueName = "test:response:queue:#{queueId}"
     @sut = new Server {
@@ -22,9 +23,9 @@ describe 'GET /subscribe', ->
       jobTimeoutSeconds: 10
       queueTimeoutSeconds: 10
       jobLogSampleRate: 0
-      redisUri: 'redis://localhost'
-      cacheRedisUri: 'redis://localhost'
-      firehoseRedisUri: 'redis://localhost'
+      redisUri: @redisUri
+      cacheRedisUri: @redisUri
+      firehoseRedisUri: @redisUri
       jobLogQueue: 'meshblu:job-log'
       jobLogRedisUri: 'redis://localhost:6379'
       @namespace
@@ -38,20 +39,20 @@ describe 'GET /subscribe', ->
     @sut.stop => done()
 
   beforeEach (done) ->
-    client = new RedisNS @namespace, new Redis 'localhost', dropBufferSupport: true
-    client.on 'ready', =>
-      queueClient = new RedisNS @namespace, new Redis 'localhost', dropBufferSupport: true
-      queueClient.on 'ready', =>
-        @jobManager = new JobManagerResponder {
-          client
-          queueClient
-          jobTimeoutSeconds: 10
-          queueTimeoutSeconds: 10
-          jobLogSampleRate: 0
-          @requestQueueName
-          @responseQueueName
-        }
-        done()
+    @jobManager = new JobManagerResponder {
+      @redisUri
+      @namespace
+      maxConnections: 1
+      jobTimeoutSeconds: 10
+      queueTimeoutSeconds: 10
+      jobLogSampleRate: 0
+      @requestQueueName
+      @responseQueueName
+    }
+    @jobManager.start done
+
+  afterEach (done) ->
+    @jobManager.stop done
 
   beforeEach (done) ->
     @jobLogClient = new Redis 'localhost', dropBufferSupport: true
